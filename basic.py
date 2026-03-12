@@ -2,7 +2,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import chromadb
 import os
-
+import httpx
 load_dotenv()
 API_KEY = os.getenv("OPEN_API_KEY")
 
@@ -11,7 +11,8 @@ collection  = chroma_client.create_collection(name="documents")
 
 
 client = OpenAI(
-      api_key=API_KEY
+      api_key=API_KEY,
+      http_client= httpx.Client(verify=r"C:\Users\MC823AX\ZscalerRootCertificate-2048-SHA256-Feb2025 (2).pem")
 )
 def chunk_text(text, chunk_size = 100, overlap = 20):
     chunks = []
