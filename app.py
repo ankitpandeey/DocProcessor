@@ -1,111 +1,49 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from openai import OpenAI
 from dotenv import load_dotenv
 from pypdf import PdfReader
 import chromadb
 import os
+import asyncio
 import httpx
 
+# -----------------------------
+# Environment
+# -----------------------------
+
 load_dotenv()
-# ✅ Use your env var (your code uses OPEN_API_KEY)
 API_KEY = os.getenv("OPEN_API_KEY")
-pdf_path = "pd.pdf"
-reader = PdfReader(pdf_path)
-all_text = ""
-for page in reader.pages:
-    page_text= page.extract_text()
-    if page_text:
-        all_text += page_text + "\n"
-    
 
-# ✅ OpenAI client (your Zscaler cert)
-client = OpenAI(
-    api_key=API_KEY,
-    http_client=httpx.Client(
-        verify=r"C:\Users\MC823AX\ZscalerRootCertificate-2048-SHA256-Feb2025 (2).pem"
+# -----------------------------
+# OpenAI Client
+# -----------------------------
+
+if os.name == "nt":
+    client = OpenAI(
+        api_key=API_KEY,
+        http_client=httpx.Client(
+            verify=r"C:\Users\MC823AX\ZscalerRootCertificate-2048-SHA256-Feb2025 (2).pem"
+        )
     )
-)
+else:
+    client = OpenAI(api_key=API_KEY)
 
-# ✅ Chroma (TIP: use PersistentClient in real apps so it survives restarts)
-chroma_client = chromadb.Client()
+# -----------------------------
+# Chroma Persistent DB
+# -----------------------------
+
+chroma_client = chromadb.PersistentClient(path="./chroma_db")
 collection = chroma_client.get_or_create_collection(name="documents")
 
-def chunk_text(text, chunk_size=100, overlap=20):
-    chunks = []
-    start = 0
-    while start < len(text):
-        end = start + chunk_size
-        chunks.append(text[start:end])
-        start += chunk_size - overlap
-    return chunks
-
-def ensure_indexed():
-    """Index document.txt only once (simple guard)."""
-    # If already has embeddings/docs, skip.
-    try:
-        existing = collection.count()
-        if existing and existing > 0:
-            return
-    except Exception:
-        pass
-
-    chunks = chunk_text(all_text)
-
-    for i, chunk in enumerate(chunks):
-        emb = client.embeddings.create(
-            model="text-embedding-3-small",
-            input=chunk
-        ).data[0].embedding
-
-        collection.add(
-            ids=[str(i)],
-            documents=[chunk],
-            embeddings=[emb]
-        )
-
-def answer_question(question: str) -> str:
-    # Embed the question
-    query_embedding = client.embeddings.create(
-        model="text-embedding-3-small",
-        input=question
-    ).data[0].embedding
-
-    # Retrieve top chunks
-    results = collection.query(
-        query_embeddings=[query_embedding],
-        n_results=3
-    )
-
-    context = "\n".join(results["documents"][0])
-
-    prompt = f"""
-Answer the question using the context below.
-
-Context:
-{context}
-
-Question:
-{question}
-"""
-
-    # Chat completion (message-based interface) [4](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/chatgpt)[5](https://deepwiki.com/openai/openai-python/4.1-chat-completions-api)
-    chat = client.chat.completions.create(
-        # ⚠️ Use a model you actually have access to.
-        # Example: "gpt-4o-mini" (or your available one)
-        model="gpt-5.4",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.2
-    )
-
-    return chat.choices[0].message.content
-
+# -----------------------------
+# FastAPI App
+# -----------------------------
 
 app = FastAPI()
 
-# ✅ CORS: allow your React dev server (Vite default is 5173)
-# Without this, browser blocks calls across ports. [2](https://davidmuraya.com/blog/fastapi-cors-configuration/)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -114,21 +52,137 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# -----------------------------
+# Request Model
+# -----------------------------
+
 class ChatRequest(BaseModel):
     message: str
 
-class ChatResponse(BaseModel):
-    reply: str
+# -----------------------------
+# Chunking
+# -----------------------------
+
+def chunk_text(text, chunk_size=800, overlap=100):
+    chunks = []
+    start = 0
+
+    while start < len(text):
+        end = start + chunk_size
+        chunks.append(text[start:end])
+        start += chunk_size - overlap
+
+    return chunks
+
+# -----------------------------
+# Document Indexing
+# -----------------------------
+
+def ensure_indexed(text):
+
+    try:
+        if collection.count() > 0:
+            return
+    except:
+        pass
+
+    chunks = chunk_text(text)
+
+    response = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=chunks
+    )
+
+    embeddings = [e.embedding for e in response.data]
+
+    collection.add(
+        ids=[str(i) for i in range(len(chunks))],
+        documents=chunks,
+        embeddings=embeddings,
+        metadatas=[{"source": "pd.pdf"} for _ in chunks]
+    )
+
+# -----------------------------
+# Startup Event
+# -----------------------------
 
 @app.on_event("startup")
 def startup():
-    ensure_indexed()
 
-@app.post("/chat", response_model=ChatResponse)
-def chat(req: ChatRequest):
-    reply = answer_question(req.message)
-    return ChatResponse(reply=reply)
+    pdf_path = "pd.pdf"
+
+    reader = PdfReader(pdf_path)
+
+    text = ""
+
+    for page in reader.pages:
+        page_text = page.extract_text()
+
+        if page_text:
+            text += page_text + "\n"
+
+    ensure_indexed(text)
+
+# -----------------------------
+# Streaming Chat Endpoint (RAG)
+# -----------------------------
+
+@app.post("/chat")
+async def chat(data: ChatRequest):
+
+    question = data.message
+
+    # Embed question
+    query_embedding = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=question
+    ).data[0].embedding
+
+    # Vector search
+    results = collection.query(
+        query_embeddings=[query_embedding],
+        n_results=3
+    )
+
+    context = "\n".join(results["documents"][0])
+
+    prompt = f"""
+Use the context below to answer the question.
+
+Context:
+{context}
+
+Question:
+{question}
+"""
+
+    stream = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": "Answer clearly using markdown headings and bullet points."},
+            {"role": "user", "content": prompt}
+        ],
+        stream=True
+    )
+
+    async def event_generator():
+     for chunk in stream:
+        delta = chunk.choices[0].delta
+
+        if delta and delta.content:
+            yield delta.content
+            await asyncio.sleep(0)
+
+    return StreamingResponse(
+    event_generator(),
+    media_type="text/plain",
+    headers={"Cache-Control": "no-cache"}
+)
+
+# -----------------------------
+# Health Check
+# -----------------------------
 
 @app.get("/health")
 def health():
-    return {"ok": True}
+    return {"status": "ok"}

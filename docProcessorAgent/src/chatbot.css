@@ -1,3 +1,12 @@
+.typing::after {
+  content: "|";
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
 .chat-root {
   display: flex;
   flex-direction: column;
@@ -8,7 +17,7 @@
   color: #e5e7eb;
   font-family: system-ui, sans-serif;
   width: 148vh;
-  margin-left: 270px;
+  margin-left: 260px;
 }
 
 .chat-header {
@@ -72,6 +81,7 @@
   border-radius: 8px;
   outline: none;
   height: 28px;
+  font-size: medium;
 }
 
 .chat-input button {
@@ -101,4 +111,38 @@
 
 .clear-btn:hover {
   background: #1e293b;
+}
+/* Markdown content inside assistant bubble */
+
+.bubble h1 {
+  font-size: 20px;
+  margin: 6px 0;
+}
+
+.bubble h2 {
+  font-size: 18px;
+  margin: 6px 0;
+}
+
+.bubble h3 {
+  font-size: 16px;
+  margin: 6px 0;
+}
+
+.bubble h4 {
+  font-size: 15px;
+  margin: 6px 0;
+}
+
+.bubble p {
+  margin: 4px 0;
+}
+
+.bubble ul {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+
+.bubble li {
+  margin: 2px 0;
 }
