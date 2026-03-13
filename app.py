@@ -9,7 +9,6 @@ import os
 import httpx
 
 load_dotenv()
-# ✅ Use your env var (your code uses OPEN_API_KEY)
 API_KEY = os.getenv("OPEN_API_KEY")
 pdf_path = "pd.pdf"
 reader = PdfReader(pdf_path)
@@ -18,15 +17,19 @@ for page in reader.pages:
     page_text= page.extract_text()
     if page_text:
         all_text += page_text + "\n"
-    
 
-# ✅ OpenAI client (your Zscaler cert)
-client = OpenAI(
-    api_key=API_KEY,
-    http_client=httpx.Client(
-        verify=r"C:\Users\MC823AX\ZscalerRootCertificate-2048-SHA256-Feb2025 (2).pem"
+if os.name == "nt":
+    client = OpenAI(
+        api_key=API_KEY,
+        http_client=httpx.Client(
+            verify=r"C:\Users\MC823AX\ZscalerRootCertificate-2048-SHA256-Feb2025 (2).pem"
+        )
     )
-)
+else:
+    client = OpenAI(
+        api_key=API_KEY
+    )
+
 
 # ✅ Chroma (TIP: use PersistentClient in real apps so it survives restarts)
 chroma_client = chromadb.Client()
@@ -42,28 +45,29 @@ def chunk_text(text, chunk_size=100, overlap=20):
     return chunks
 
 def ensure_indexed():
-    """Index document.txt only once (simple guard)."""
-    # If already has embeddings/docs, skip.
+    """Index document only once"""
     try:
-        existing = collection.count()
-        if existing and existing > 0:
+        if collection.count() > 0:
             return
-    except Exception:
+    except:
         pass
 
     chunks = chunk_text(all_text)
 
-    for i, chunk in enumerate(chunks):
-        emb = client.embeddings.create(
-            model="text-embedding-3-small",
-            input=chunk
-        ).data[0].embedding
+    # Generate embeddings in batch
+    response = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=chunks
+    )
 
-        collection.add(
-            ids=[str(i)],
-            documents=[chunk],
-            embeddings=[emb]
-        )
+    embeddings = [e.embedding for e in response.data]
+
+    # Insert everything in one batch
+    collection.add(
+        ids=[str(i) for i in range(len(chunks))],
+        documents=chunks,
+        embeddings=embeddings
+    )
 
 def answer_question(question: str) -> str:
     # Embed the question
@@ -94,7 +98,7 @@ Question:
     chat = client.chat.completions.create(
         # ⚠️ Use a model you actually have access to.
         # Example: "gpt-4o-mini" (or your available one)
-        model="gpt-4o-mini",
+        model="gpt-5.4",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.2
     )
