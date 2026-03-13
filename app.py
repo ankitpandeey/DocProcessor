@@ -94,7 +94,7 @@ Question:
     chat = client.chat.completions.create(
         # ⚠️ Use a model you actually have access to.
         # Example: "gpt-4o-mini" (or your available one)
-        model="gpt-4o-mini",
+        model="gpt-5.4",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.2
     )
