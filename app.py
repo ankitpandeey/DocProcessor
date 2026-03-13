@@ -3,14 +3,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import OpenAI
 from dotenv import load_dotenv
+from pypdf import PdfReader
 import chromadb
 import os
 import httpx
 
 load_dotenv()
-
 # ✅ Use your env var (your code uses OPEN_API_KEY)
 API_KEY = os.getenv("OPEN_API_KEY")
+pdf_path = "pd.pdf"
+reader = PdfReader(pdf_path)
+all_text = ""
+for page in reader.pages:
+    page_text= page.extract_text()
+    if page_text:
+        all_text += page_text + "\n"
+    
 
 # ✅ OpenAI client (your Zscaler cert)
 client = OpenAI(
@@ -43,10 +51,7 @@ def ensure_indexed():
     except Exception:
         pass
 
-    with open("document.txt", "r", encoding="utf-8") as doc:
-        text = doc.read()
-
-    chunks = chunk_text(text)
+    chunks = chunk_text(all_text)
 
     for i, chunk in enumerate(chunks):
         emb = client.embeddings.create(

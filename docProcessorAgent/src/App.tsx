@@ -30,8 +30,9 @@ export default function Chatbot() {
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-
-    setMessages((m) => [...m, { role: "assistant", content: data.reply }]);
+    const formatted = formatLLMToMarkdown(data.reply)
+    console.log(data.reply)
+    setMessages((m) => [...m, { role: "assistant", content: formatted }]);
   } catch (err) {
     setMessages((m) => [
       ...m,
@@ -48,7 +49,33 @@ function clearChat() {
   ]);
   setLoading(false);
 }
-  return (
+
+// formatLLM.ts
+function formatLLMToMarkdown(input: string): string {
+  if (!input) return "";
+
+  let text = input.trim();
+
+  // 1️⃣ Ensure every heading starts on a NEW line
+  text = text.replace(/([^\n])###\s+/g, "$1\n\n### ");
+
+  // 2️⃣ Force headings to end with a newline
+  text = text.replace(/###\s+([^\n]+)/g, "### $1\n");
+
+  // 3️⃣ Convert "### Main Body - ### Subsection" → proper hierarchy
+  text = text.replace(
+    /###\s+Main Body\s*-\s*###\s+/gi,
+    "### Main Body\n\n#### "
+  );
+
+  // 4️⃣ Promote other inline ### headings to sub‑headings
+  text = text.replace(/###\s+(Establishment|Increased|Regulation|Expansion)/g, "#### $1");
+
+  // 5️⃣ Clean spacing
+  text = text.replace(/\n{3,}/g, "\n\n");
+
+  return text.trim();
+}  return (
     <div className="chat-root">
       
 <header className="chat-header">
