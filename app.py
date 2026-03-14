@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pydantic import BaseModel
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -25,6 +27,15 @@ else:
 
 chroma_client = chromadb.Client()
 collection  = chroma_client.create_collection(name="documents")
+loader =  PyPDFLoader("pd.pdf")
+documents = loader.load()
+splitter = RecursiveCharacterTextSplitter(
+      chunk_size = 1000,
+      chunk_overlap = 200
+)
+chunks = splitter.split_documents(documents)
+texts = [chunk.page_content for chunk in chunks]
+print(chunks)
 
 app = FastAPI()
 app.add_middleware(
@@ -35,31 +46,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 class ChatRequest(BaseModel):
     message: str
-
-
-def chunk_text(text, chunk_size=800, overlap=100):
-    chunks = []
-    start = 0
-    while start < len(text):
-        end = start + chunk_size
-        chunks.append(text[start:end])
-        start += chunk_size - overlap
-    return chunks
-
-
-def ensure_indexed(text):
+def ensure_indexed():
     try:
         if collection.count() > 0:
             return
     except:
         pass
-    chunks = chunk_text(text)
+    chunks = texts
     response = client.embeddings.create(
         model="text-embedding-3-small",
-        input=chunks
+        input=texts
     )
 
     embeddings = [e.embedding for e in response.data]
@@ -74,14 +72,7 @@ def ensure_indexed(text):
 
 @app.on_event("startup")
 def startup():
-    pdf_path = "pd.pdf"
-    reader = PdfReader(pdf_path)
-    text = ""
-    for page in reader.pages:
-        page_text = page.extract_text()
-        if page_text:
-            text += page_text + "\n"
-    ensure_indexed(text)
+    ensure_indexed()
 
 
 @app.post("/chat")
