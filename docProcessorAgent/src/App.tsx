@@ -16,13 +16,10 @@ export default function Chatbot() {
 
   async function sendMessage() {
     if (!input.trim() || loading) return;
-
     const userMsg = { role: "user", content: input };
-
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    setLoading(true);
-
+    setLoading(false);
     // add empty assistant message
     setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 

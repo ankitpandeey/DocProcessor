@@ -23,8 +23,8 @@ else:
     client = OpenAI(api_key=API_KEY)
 
 
-chroma_client = chromadb.Client(path="./chroma_db")
-collection = chroma_client.get_or_create_collection(name="documents")
+chroma_client = chromadb.Client()
+collection  = chroma_client.create_collection(name="documents")
 
 app = FastAPI()
 app.add_middleware(
@@ -35,8 +35,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class ChatRequest(BaseModel):
     message: str
+
 
 def chunk_text(text, chunk_size=800, overlap=100):
     chunks = []
@@ -46,6 +48,7 @@ def chunk_text(text, chunk_size=800, overlap=100):
         chunks.append(text[start:end])
         start += chunk_size - overlap
     return chunks
+
 
 def ensure_indexed(text):
     try:
@@ -68,6 +71,7 @@ def ensure_indexed(text):
         metadatas=[{"source": "pd.pdf"} for _ in chunks]
     )
 
+
 @app.on_event("startup")
 def startup():
     pdf_path = "pd.pdf"
@@ -78,6 +82,7 @@ def startup():
         if page_text:
             text += page_text + "\n"
     ensure_indexed(text)
+
 
 @app.post("/chat")
 async def chat(data: ChatRequest):
@@ -109,18 +114,19 @@ Question:
     )
 
     async def event_generator():
-     for chunk in stream:
-        delta = chunk.choices[0].delta
+        for chunk in stream:
+            delta = chunk.choices[0].delta
 
-        if delta and delta.content:
-            yield delta.content
-            await asyncio.sleep(0)
+            if delta and delta.content:
+                yield delta.content
+                await asyncio.sleep(0)
 
     return StreamingResponse(
-    event_generator(),
-    media_type="text/plain",
-    headers={"Cache-Control": "no-cache"}
-)
+        event_generator(),
+        media_type="text/plain",
+        headers={"Cache-Control": "no-cache"}
+    )
+
 
 @app.get("/health")
 def health():
