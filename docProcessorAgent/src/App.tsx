@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import "./chatbot.css";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 
 
 export default function Chatbot() {
@@ -50,21 +51,15 @@ export default function Chatbot() {
           setLoading(false); // hide "Typing..."
           firstChunk = false;
         }
-
-        for (const char of chunk) {
-          fullText += char;
-
-          setMessages(prev => {
-            const updated = [...prev];
-            updated[updated.length - 1] = {
-              role: "assistant",
-              content: fullText
-            };
-            return updated;
-          });
-
-          await new Promise(r => setTimeout(r, 15));
-        }
+        fullText += chunk;
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            role: "assistant",
+            content: fullText
+          };
+          return updated;
+        });
       }
     } catch (err) {
       console.error(err);
@@ -111,7 +106,12 @@ export default function Chatbot() {
         {messages.map((m, i) => (
           <div key={i} className={`msg ${m.role}`}>
             <div className="bubble">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
+              >
+                {m.content}
+              </ReactMarkdown>
             </div>
           </div>
         ))}
