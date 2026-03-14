@@ -25,17 +25,16 @@ else:
     client = OpenAI(api_key=API_KEY)
 
 
-chroma_client = chromadb.Client()
-collection  = chroma_client.create_collection(name="documents")
-loader =  PyPDFLoader("pd.pdf")
+chroma_client = chromadb.PersistentClient(path="./chroma_db")
+collection = chroma_client.get_or_create_collection(name="documents")
+loader = PyPDFLoader("polity.pdf")
 documents = loader.load()
 splitter = RecursiveCharacterTextSplitter(
-      chunk_size = 1000,
-      chunk_overlap = 200
+    chunk_size=1000,
+    chunk_overlap=200               
 )
 chunks = splitter.split_documents(documents)
 texts = [chunk.page_content for chunk in chunks]
-print(chunks)
 
 app = FastAPI()
 app.add_middleware(
@@ -46,34 +45,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class ChatRequest(BaseModel):
     message: str
+
+
 def ensure_indexed():
     try:
         if collection.count() > 0:
+            print("DB is already updated")
             return
     except:
         pass
-    chunks = texts
+    print("updating DB")
+    texts = [chunk.page_content for chunk in chunks]
+
+batch_size = 100
+
+for i in range(0, len(texts), batch_size):
+    batch = texts[i:i+batch_size]
     response = client.embeddings.create(
         model="text-embedding-3-small",
-        input=texts
+        input=batch
     )
-
-    embeddings = [e.embedding for e in response.data]
-
-    collection.add(
-        ids=[str(i) for i in range(len(chunks))],
-        documents=chunks,
-        embeddings=embeddings,
-        metadatas=[{"source": "pd.pdf"} for _ in chunks]
-    )
+    for j, emb in enumerate(response.data):
+        chunk = chunks[i + j]
+        collection.add(
+            ids=[f"doc_{i+j}"],
+            documents=[chunk.page_content],
+            embeddings=[emb.embedding],
+            metadatas=[chunk.metadata]
+        )
 
 
 @app.on_event("startup")
 def startup():
     ensure_indexed()
-
 
 @app.post("/chat")
 async def chat(data: ChatRequest):
@@ -89,7 +96,7 @@ async def chat(data: ChatRequest):
     )
     context = "\n".join(results["documents"][0])
     prompt = f"""
-Use the context below to answer the question.
+Use the context below to answer the question. Also generate follow up questions
 Context:
 {context}
 Question:

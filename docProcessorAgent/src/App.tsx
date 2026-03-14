@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import "./chatbot.css";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([
@@ -109,7 +111,7 @@ export default function Chatbot() {
         {messages.map((m, i) => (
           <div key={i} className={`msg ${m.role}`}>
             <div className="bubble">
-              <ReactMarkdown>{m.content}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
             </div>
           </div>
         ))}

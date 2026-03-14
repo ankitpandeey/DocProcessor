@@ -146,3 +146,19 @@
 .bubble li {
   margin: 2px 0;
 }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 10px;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+th {
+  background-color: none;
+  font-weight: bold;
+}
