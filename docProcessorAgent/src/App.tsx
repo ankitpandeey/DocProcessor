@@ -4,7 +4,6 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 
-
 export default function Chatbot() {
   const [messages, setMessages] = useState([
     { role: "assistant", content: "Hi, How can I help you today?" },
@@ -100,7 +99,6 @@ export default function Chatbot() {
           Clear chat
         </button>
       </header>
-
 
       <div className="chat-body">
         {messages.map((m, i) => (
