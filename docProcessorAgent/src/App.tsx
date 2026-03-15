@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import "./chatbot.css";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -6,27 +6,42 @@ import rehypeRaw from "rehype-raw";
 import remarkSqueezeParagraphs from "remark-squeeze-paragraphs";
 
 export default function Chatbot() {
+
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hi, How can I help you today?" },
+    { role: "assistant", content: "Hi, How can I help you today?" }
   ]);
+
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const endRef = useRef(null);
 
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+  const assistantStartRef = useRef(null);
 
   async function sendMessage() {
+
     if (!input.trim() || loading) return;
+
     const userMsg = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMsg]);
+
+    setMessages(prev => [
+      ...prev,
+      userMsg,
+      { role: "assistant", content: "" }
+    ]);
+
     setInput("");
-    setLoading(false);
-    // add empty assistant message
-    setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+
+    // scroll to assistant answer start
+    setTimeout(() => {
+      assistantStartRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }, 0);
+
+    setLoading(true);
 
     try {
+
       const res = await fetch("http://localhost:8000/chat", {
         method: "POST",
         headers: {
@@ -42,25 +57,29 @@ export default function Chatbot() {
       let firstChunk = true;
 
       while (true) {
+
         const { value, done } = await reader.read();
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
 
         if (firstChunk) {
-          setLoading(false); // hide "Typing..."
+          setLoading(false);
           firstChunk = false;
         }
+
         fullText += chunk;
-        setMessages(prev => {
-          const updated = [...prev];
-          updated[updated.length - 1] = {
-            role: "assistant",
-            content: fullText
-          };
-          return updated;
+
+        requestAnimationFrame(() => {
+          setMessages(prev => {
+            const updated = [...prev];
+            updated[updated.length - 1].content = fullText;
+            return updated;
+          });
         });
+
       }
+
     } catch (err) {
       console.error(err);
     } finally {
@@ -72,57 +91,88 @@ export default function Chatbot() {
     setMessages([
       { role: "assistant", content: "Hi, How can I help you today?" }
     ]);
-    setLoading(false);
   }
 
-  function formatLLMToMarkdown(input: string): string {
-    if (!input) return "";
-    let text = input.trim();
-    text = text.replace(/\s*###\s+/g, "\n\n### ");
-    text = text.replace(/\n?\s*-\s+/g, "\n- ");
-    text = text.replace(/\n{3,}/g, "\n\n");
-    return text.trim();
-  } return (
+  return (
     <div className="chat-root">
+
+      {/* HEADER */}
       <header className="chat-header">
-        <span>Doc Processing Agent</span>
-        <button className="clear-btn" onClick={clearChat}>
-          Clear chat
-        </button>
+        <div className="header-inner">
+          <span>Doc Processing Agent</span>
+          <button className="clear-btn" onClick={clearChat}>
+            Clear chat
+          </button>
+        </div>
       </header>
+
+      {/* CHAT BODY */}
       <div className="chat-body">
-        {messages.map((m, i) => (
-          <div key={i} className={`msg ${m.role}`}>
-            <div className="bubble">
-              <ReactMarkdown
-               remarkPlugins={[remarkGfm, remarkSqueezeParagraphs]}
-                rehypePlugins={[rehypeRaw]}
 
+        <div className="chat-container">
+
+          {messages.map((m, i) => {
+
+            const isAssistantStart =
+              m.role === "assistant" && m.content === "";
+
+            return (
+              <div
+                key={i}
+                className={`msg-row ${m.role}`}
+                ref={isAssistantStart ? assistantStartRef : null}
               >
-                {m.content}
-              </ReactMarkdown>
+                <div className="msg-content">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkSqueezeParagraphs]}
+                    rehypePlugins={[rehypeRaw]}
+                  >
+                    {m.content}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            );
+
+          })}
+
+          {loading && (
+            <div className="msg-row assistant">
+              <div className="msg-content typing">
+                Typing…
+              </div>
             </div>
-          </div>
-        ))}
+          )}
 
-        {loading && (
-          <div className="msg assistant">
-            <div className="bubble typing">Typing…</div>
-          </div>
-        )}
+        </div>
 
-        <div ref={endRef} />
       </div>
 
-      <div className="chat-input">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          placeholder="Ask anything…"
-        />
-        <button onClick={sendMessage}>Send</button>
+      {/* INPUT */}
+      <div className="chat-input-wrapper">
+
+        <div className="chat-input">
+
+          <textarea
+            rows={1}
+            value={input}
+            placeholder="Ask anything…"
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+              }
+            }}
+          />
+
+          <button onClick={sendMessage}>
+            Send
+          </button>
+
+        </div>
+
       </div>
+
     </div>
   );
 }
