@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader
+from langchain_community.document_loaders import Docx2txtLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pydantic import BaseModel
 from openai import OpenAI
@@ -27,7 +28,15 @@ else:
 chroma_client = chromadb.PersistentClient(path="./chroma_db")
 collection = chroma_client.get_or_create_collection(name="documents")
 
-loader = PyPDFLoader("polity.pdf")
+
+loader = DirectoryLoader(
+    path="kb",          
+    glob="**/*.pdf",   
+    loader_cls=PyPDFLoader,
+    show_progress=True
+)
+
+# loader = PyPDFLoader("polity.pdf")
 documents = loader.load()
 
 splitter = RecursiveCharacterTextSplitter(
@@ -39,7 +48,6 @@ chunks = splitter.split_documents(documents)
 texts = [chunk.page_content for chunk in chunks]
 
 app = FastAPI()
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -121,7 +129,7 @@ async def chat(data: ChatRequest):
     context = "\n".join(results["documents"][0])
 
     prompt = f"""
-    You are a UPSC Polity tutor.
+    You are a Business Analyst who try to explain tool's technical knowledge to a client.
     Use the provided context to answer the question.
     Context:
     {context}

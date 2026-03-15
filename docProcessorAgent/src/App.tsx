@@ -3,6 +3,7 @@ import "./chatbot.css";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
+import remarkSqueezeParagraphs from "remark-squeeze-paragraphs";
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([
@@ -74,39 +75,29 @@ export default function Chatbot() {
     setLoading(false);
   }
 
-  // formatLLM.ts
   function formatLLMToMarkdown(input: string): string {
     if (!input) return "";
-
     let text = input.trim();
-
-    // Ensure headings always start on a new line
     text = text.replace(/\s*###\s+/g, "\n\n### ");
-
-    // Normalize bullet points
     text = text.replace(/\n?\s*-\s+/g, "\n- ");
-
-    // Clean excessive spacing
     text = text.replace(/\n{3,}/g, "\n\n");
-
     return text.trim();
   } return (
     <div className="chat-root">
-
       <header className="chat-header">
         <span>Doc Processing Agent</span>
         <button className="clear-btn" onClick={clearChat}>
           Clear chat
         </button>
       </header>
-
       <div className="chat-body">
         {messages.map((m, i) => (
           <div key={i} className={`msg ${m.role}`}>
             <div className="bubble">
               <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
+               remarkPlugins={[remarkGfm, remarkSqueezeParagraphs]}
                 rehypePlugins={[rehypeRaw]}
+
               >
                 {m.content}
               </ReactMarkdown>
