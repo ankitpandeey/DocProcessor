@@ -40,7 +40,7 @@ chat_history = []
 
 chroma_client = chromadb.PersistentClient(path="./chroma_db")
 collection = chroma_client.get_or_create_collection(name="documents")
-
+print(collection.count())
 def rewrite_query(user_input, chat_history):
     if len(chat_history) == 0:
         return user_input
@@ -84,19 +84,30 @@ async def chat(data: ChatRequest):
         query_embeddings=[query_embedding],
         n_results=3
     )
+
+    scores = results["distances"][0]
+    if min(scores) > 0.7:
+        return "This question is not related to available documents"
     context = "\n".join(results["documents"][0])
 
     prompt = f"""
-    You are a Business Analyst who try to explain tool's technical knowledge to a client.
-    Use the provided context to answer the question.
+    You are a knowledgeable assistant.
+    Use the provided context to answer the user's question.
+    Guidelines:
+    - Prefer information from the context when it is available.
+    - If the context contains partial information, combine it with your general knowledge to provide a clear explanation.
+    - If the question is completely unrelated to the context, explain that the information is not available in the provided sources and offer a helpful response if possible.
+    Formatting guidelines:
+    - Begin with a short explanatory paragraph.
+    - Use bullet points only when listing key facts or steps.
+    - Do not convert the entire answer into bullet points.
+    Conversation guidelines:
+    - Ask one relevant follow-up question when appropriate.
     Context:
-    {context}
-
-    Question:
-    {question}
-
-    Explain clearly using headings and bullet points.
-    Highlight exam traps when relevant.
+{context}
+Question:
+{question}
+Answer:
     """
     stream = client.chat.completions.create(
         model="gpt-5.4",

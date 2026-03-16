@@ -4,7 +4,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from chromadb import PersistentClient
 from openai import OpenAI
 from dotenv import load_dotenv
-
+import httpx
 
 load_dotenv()
 API_KEY = os.getenv("OPEN_API_KEY")
@@ -19,7 +19,7 @@ else:
     client = OpenAI(api_key=API_KEY)
 
 # Chroma persistent DB
-chroma_client = PersistentClient(path="./chroma_db")
+chroma_client = PersistentClient(path="/chroma_db")
 collection = chroma_client.get_or_create_collection("knowledge_base")
 # Load all PDFs from kb folder
 loader = DirectoryLoader(
