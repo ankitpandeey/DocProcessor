@@ -1,47 +1,64 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import "./chatbot.css";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import remarkSqueezeParagraphs from "remark-squeeze-paragraphs";
 
-export default function Chatbot() {
+type Message = {
+  role: "user" | "assistant";
+  content: string;
+};
 
-  const [messages, setMessages] = useState([
+export default function Chatbot() {
+  const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", content: "Hi, How can I help you today?" }
   ]);
-
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const assistantStartRef = useRef<HTMLDivElement | null>(null);
+  const chatRef = useRef<HTMLDivElement | null>(null);
+  const endRef = useRef<HTMLDivElement | null>(null);
 
-  const assistantStartRef = useRef(null);
+  // Detect user scrolling
+  useEffect(() => {
+    const container = chatRef.current;
+    if (!container) return;
+    const handleScroll = () => {
+      const distanceFromBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight;
+      setShowScrollButton(distanceFromBottom > 200);
+    };
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
 
+  }, []);
+
+  function scrollToBottom() {
+    endRef.current?.scrollIntoView({
+      behavior: "smooth"
+    });
+
+  }
   async function sendMessage() {
-
     if (!input.trim() || loading) return;
-
-    const userMsg = { role: "user", content: input };
-
+    const userMsg: Message = { role: "user", content: input };
     setMessages(prev => [
       ...prev,
       userMsg,
       { role: "assistant", content: "" }
     ]);
-
     setInput("");
-
-    // scroll to assistant answer start
+    // Scroll to start of assistant answer
     setTimeout(() => {
       assistantStartRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start"
       });
     }, 0);
-
     setLoading(true);
-
     try {
-
       const res = await fetch("http://localhost:8000/chat", {
         method: "POST",
         headers: {
@@ -49,33 +66,26 @@ export default function Chatbot() {
         },
         body: JSON.stringify({ message: userMsg.content })
       });
-
-      const reader = res.body.getReader();
+      const reader = res.body!.getReader();
       const decoder = new TextDecoder();
-
       let fullText = "";
       let firstChunk = true;
-
       while (true) {
-
         const { value, done } = await reader.read();
         if (done) break;
-
         const chunk = decoder.decode(value, { stream: true });
-
         if (firstChunk) {
           setLoading(false);
           firstChunk = false;
         }
-
         fullText += chunk;
-
         requestAnimationFrame(() => {
           setMessages(prev => {
             const updated = [...prev];
             updated[updated.length - 1].content = fullText;
             return updated;
           });
+
         });
 
       }
@@ -86,7 +96,6 @@ export default function Chatbot() {
       setLoading(false);
     }
   }
-
   function clearChat() {
     setMessages([
       { role: "assistant", content: "Hi, How can I help you today?" }
@@ -94,28 +103,29 @@ export default function Chatbot() {
   }
 
   return (
-    <div className="chat-root">
 
+    <div className="chat-root">
       {/* HEADER */}
       <header className="chat-header">
         <div className="header-inner">
           <span>Doc Processing Agent</span>
-          <button className="clear-btn" onClick={clearChat}>
+          <button
+            className="clear-btn"
+            onClick={clearChat}
+          >
             Clear chat
           </button>
         </div>
       </header>
-
       {/* CHAT BODY */}
       <div className="chat-body">
-
-        <div className="chat-container">
-
+        <div
+          className="chat-container"
+          ref={chatRef}
+        >
           {messages.map((m, i) => {
-
             const isAssistantStart =
               m.role === "assistant" && m.content === "";
-
             return (
               <div
                 key={i}
@@ -132,7 +142,6 @@ export default function Chatbot() {
                 </div>
               </div>
             );
-
           })}
 
           {loading && (
@@ -142,16 +151,22 @@ export default function Chatbot() {
               </div>
             </div>
           )}
-
+          <div ref={endRef}></div>
         </div>
-
       </div>
+      {/* SCROLL TO BOTTOM BUTTON */}
+      {showScrollButton && (
+        <button
+          className="scroll-bottom-btn"
+          onClick={scrollToBottom}
+        >
+          ↓
+        </button>
+      )}
 
       {/* INPUT */}
       <div className="chat-input-wrapper">
-
         <div className="chat-input">
-
           <textarea
             rows={1}
             value={input}
@@ -164,15 +179,12 @@ export default function Chatbot() {
               }
             }}
           />
-
           <button onClick={sendMessage}>
             Send
           </button>
-
         </div>
-
       </div>
-
     </div>
   );
+
 }

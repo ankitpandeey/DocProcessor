@@ -25,28 +25,6 @@ if os.name == "nt":
 else:
     client = OpenAI(api_key=API_KEY)
 
-chroma_client = chromadb.PersistentClient(path="./chroma_db")
-collection = chroma_client.get_or_create_collection(name="documents")
-
-
-loader = DirectoryLoader(
-    path="kb",          
-    glob="**/*.pdf",   
-    loader_cls=PyPDFLoader,
-    show_progress=True
-)
-
-# loader = PyPDFLoader("polity.pdf")
-documents = loader.load()
-
-splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000,
-    chunk_overlap=200
-)
-
-chunks = splitter.split_documents(documents)
-texts = [chunk.page_content for chunk in chunks]
-
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -55,29 +33,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 class ChatRequest(BaseModel):
     message: str
 chat_history = []
-def ensure_indexed():
-    if collection.count() > 0:
-        print("Vector DB already indexed")
-        return
-    print("Indexing documents...")
-    batch_size = 100
-    for i in range(0, len(texts), batch_size):
-        batch = texts[i:i + batch_size]
-        response = client.embeddings.create(
-            model="text-embedding-3-small",
-            input=batch
-        )
-        for j, emb in enumerate(response.data):
-            chunk = chunks[i + j]
-            collection.add(
-                ids=[f"doc_{i+j}"],
-                documents=[chunk.page_content],
-                embeddings=[emb.embedding],
-                metadatas=[chunk.metadata]
-            )
+
+chroma_client = chromadb.PersistentClient(path="./chroma_db")
+collection = chroma_client.get_or_create_collection(name="documents")
 
 def rewrite_query(user_input, chat_history):
     if len(chat_history) == 0:
@@ -103,10 +65,6 @@ def rewrite_query(user_input, chat_history):
         ]
     )
     return response.choices[0].message.content.strip()
-
-@app.on_event("startup")
-def startup():
-    ensure_indexed()
 
 @app.post("/chat")
 async def chat(data: ChatRequest):
@@ -169,6 +127,3 @@ async def chat(data: ChatRequest):
         headers={"Cache-Control": "no-cache"}
     )
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
