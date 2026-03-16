@@ -147,7 +147,7 @@ export default function Chatbot() {
           {loading && (
             <div className="msg-row assistant">
               <div className="msg-content typing">
-                Typing…
+                Thinking
               </div>
             </div>
           )}

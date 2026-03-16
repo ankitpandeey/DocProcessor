@@ -47,6 +47,8 @@ body {
 .chat-header {
   background: #202123;
   border-bottom: 1px solid #444654;
+  height: 60px;
+  margin-left: -500px;
 }
 
 .header-inner {
@@ -63,6 +65,7 @@ body {
   background: transparent;
   border: 1px solid #565869;
   color: #ececf1;
+  margin-right: -330px;
 
   padding: 6px 12px;
   border-radius: 6px;
@@ -78,7 +81,8 @@ body {
 .chat-body {
   flex: 1;
   overflow-y: auto;
-  padding-top: 40px;
+  padding-top: 20px;
+  margin-left: 100px;
 }
 
 /* center column */
