@@ -38,8 +38,8 @@ class ChatRequest(BaseModel):
     message: str
 chat_history = []
 
-chroma_client = chromadb.PersistentClient(path="./chroma_db")
-collection = chroma_client.get_or_create_collection(name="documents")
+chroma_client = chromadb.PersistentClient(path="/Users/ankitpandey/Documents/GitHub/DocProcessor/kb/chroma_db")
+collection = chroma_client.get_or_create_collection(name="knowledge_base")
 print(collection.count())
 def rewrite_query(user_input, chat_history):
     if len(chat_history) == 0:
