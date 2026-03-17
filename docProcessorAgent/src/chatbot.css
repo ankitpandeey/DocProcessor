@@ -45,9 +45,7 @@ body {
 /* ---------------- HEADER ---------------- */
 
 .chat-header {
-  background: #202123;
-  border-bottom: 1px solid #444654;
-  height: 60px;
+  background: none;
   margin-left: -500px;
 }
 
@@ -62,14 +60,19 @@ body {
 }
 
 .clear-btn {
-  background: transparent;
-  border: 1px solid #565869;
-  color: #ececf1;
+  background:  #40414f;;
+  border: 1px dotted #565869;
+  color: auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 15px;
+  font-weight: bold;
   margin-right: -330px;
-
+  width: 130px;
   padding: 6px 12px;
+  height: 32px;
   border-radius: 6px;
   cursor: pointer;
+  margin-top: -45px;
 }
 
 .clear-btn:hover {
@@ -233,6 +236,8 @@ body {
 
 .chat-input textarea {
   flex: 1;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 16px;
   resize: none;
   padding: 12px;
   border-radius: 8px;
@@ -267,4 +272,17 @@ body {
   0% { opacity: 1 }
   50% { opacity: 0 }
   100% { opacity: 1 }
+}
+
+.pre{
+  background-color: black;
+  color: #e5e7eb;
+  font-family: Consolas, Monaco, monospace;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+.title{
+  margin-left: 1000px;
+
 }

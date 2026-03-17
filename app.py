@@ -38,8 +38,8 @@ class ChatRequest(BaseModel):
     message: str
 chat_history = []
 
-chroma_client = chromadb.PersistentClient(path="/Users/ankitpandey/Documents/GitHub/DocProcessor/kb/chroma_db")
-collection = chroma_client.get_or_create_collection(name="knowledge_base")
+chroma_client = chromadb.PersistentClient(path=r"C:\Users\MC823AX\OneDrive - EY\Documents\docProcessor\DocProcessor\kb\chroma_db")
+collection = chroma_client.get_or_create_collection(name="knowledge_base2")
 print(collection.count())
 def rewrite_query(user_input, chat_history):
     if len(chat_history) == 0:
@@ -85,9 +85,6 @@ async def chat(data: ChatRequest):
         n_results=3
     )
 
-    scores = results["distances"][0]
-    if min(scores) > 0.7:
-        return "This question is not related to available documents"
     context = "\n".join(results["documents"][0])
 
     prompt = f"""

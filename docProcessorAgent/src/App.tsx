@@ -107,13 +107,13 @@ export default function Chatbot() {
     <div className="chat-root">
       {/* HEADER */}
       <header className="chat-header">
+        <h2 className="title">Estimaor Chatbot Assistant</h2>
         <div className="header-inner">
-          <span>Doc Processing Agent</span>
           <button
             className="clear-btn"
             onClick={clearChat}
           >
-            Clear chat
+            New Chat  
           </button>
         </div>
       </header>

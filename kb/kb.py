@@ -19,11 +19,11 @@ else:
     client = OpenAI(api_key=API_KEY)
 
 # Chroma persistent DB
-chroma_client = PersistentClient(path="/Users/ankitpandey/Documents/GitHub/DocProcessor/kb/chroma_db")
-collection = chroma_client.get_or_create_collection("knowledge_base")
+chroma_client = PersistentClient(path=r"C:\Users\MC823AX\OneDrive - EY\Documents\docProcessor\DocProcessor\kb\chroma_db")
+collection = chroma_client.get_or_create_collection("knowledge_base2")
 # Load all PDFs from kb folder
 loader = DirectoryLoader(
-    "docs",
+    "doc",
     glob="**/*.pdf",
     loader_cls=PyPDFLoader,
     show_progress=True
