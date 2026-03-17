@@ -39,7 +39,7 @@ class ChatRequest(BaseModel):
 chat_history = []
 
 chroma_client = chromadb.PersistentClient(path=r"C:\Users\MC823AX\OneDrive - EY\Documents\docProcessor\DocProcessor\kb\chroma_db")
-collection = chroma_client.get_or_create_collection(name="knowledge_base2")
+collection = chroma_client.get_or_create_collection(name="knowledge_base_demo")
 print(collection.count())
 def rewrite_query(user_input, chat_history):
     if len(chat_history) == 0:
@@ -92,14 +92,14 @@ async def chat(data: ChatRequest):
     Use the provided context to answer the user's question.
     Guidelines:
     - Prefer information from the context when it is available.
-    - If the context contains partial information, combine it with your general knowledge to provide a clear explanation.
+    - If the context contains partial information, combine it with your general knowledge to provide a clear explanation but inform user that this information is not provided in the context
     - If the question is completely unrelated to the context, explain that the information is not available in the provided sources and offer a helpful response if possible.
     Formatting guidelines:
     - Begin with a short explanatory paragraph.
     - Use bullet points only when listing key facts or steps.
     - Do not convert the entire answer into bullet points.
     Conversation guidelines:
-    - Ask one relevant follow-up question when appropriate.
+    - Ask one relevant follow-up question when appropriate don't mention UPSC or any exam.
     Context:
 {context}
 Question:

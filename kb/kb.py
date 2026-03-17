@@ -1,5 +1,5 @@
 import os
-from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader
+from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from chromadb import PersistentClient
 from openai import OpenAI
@@ -20,14 +20,17 @@ else:
 
 # Chroma persistent DB
 chroma_client = PersistentClient(path=r"C:\Users\MC823AX\OneDrive - EY\Documents\docProcessor\DocProcessor\kb\chroma_db")
-collection = chroma_client.get_or_create_collection("knowledge_base2")
+collection = chroma_client.get_or_create_collection("knowledge_base_demo")
 # Load all PDFs from kb folder
-loader = DirectoryLoader(
-    "doc",
-    glob="**/*.pdf",
-    loader_cls=PyPDFLoader,
-    show_progress=True
+loader = TextLoader(
+     "doc/KB_Template.txt",
 )
+# loader = DirectoryLoader(
+#     "doc",
+#     glob="**/*.pdf",
+#     loader_cls=PyPDFLoader,
+#     show_progress=True
+# )
 
 documents = loader.load()
 

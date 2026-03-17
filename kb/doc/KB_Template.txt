@@ -1,0 +1,44 @@
+►	Scalers — Types of drivers that amplify impact of specific-size drivers. An increase in unit count of a scalar (e.g., business unit) will increase effort for the impacted driver (e.g., business process) by a specified percentage (e.g., 20%) for each additional unit greater than 1. 
+
+•	Common Scalers 
+•	Languages – Number of languages that affect the Business Process Design & Config and Training Performance Support. Overall, increases the base effort for Enhancements, Reports and Data Conversion by 7% for each unit greater than 1. Similarly, increases Business Process and Configuration by 3% for each unit greater than 1. For more information refer to Scaler section in the User Guide.
+•	Months of Hypercare – The actual duration of hypercare in months, with default being 1 month. Overall, increases the base effort for Business Process Design & Config by 2% for each unit greater than 1. Similarly, increases Security & Compliance and Data Conversion by 3%, Technical Architecture by 4%, Enhancements and Reports by 5%, Data Integration by 6%, and Change Management by 8% for each unit greater than 1. For more information refer to Scaler section in the User Guide.
+•	UAT Cycles – Increases all RICEFW related workstreams effort in the Test phase of work. Overall, increases the base effort for Enhancements and Reports by 4% for each unit greater than 1. Similarly, increases Data Integration by 5% for each unit greater than 1. For more information refer to Scaler section in the User Guide.
+•	SIT Cycles – Increases all RICEFW related workstreams effort in the Test phase of work. The effort is increased for each SIT test cycle greater 1. Overall, increases the base effort for Enhancements and Reports by 4% for each unit greater than 1. Similarly, increases Data Integration by 5% for each unit greater than 1. For more information refer to Scaler section in the User Guide.
+•	Migration Cycles - The number of times a set of conversion program must be re-run, with the goal of reducing number of data conversion errors with each cycle.
+•	Business Units – Increases the Business Process and Configuration workstream effort for each additional business unit greater than 1 – default value set as 1
+•	Number of Clouds – Number of Clouds that client is using for their Cloud strategy. For example is client planning to use more than one leading cloud platforms (AWS, GCP, Azure etc.). Excluding Oracle cloud.
+•	Business Process Design and Config
+•	Ledgers – Number of ledgers that affect the Business Process Design & Config. Overall, increases the base effort for Business Process Design & Config by roughly 2% for each unit greater than 1. For more information refer to Scaler section in the User Guide.
+•	Technical Architecture 
+•	Application Landscape – Number of different business applications that will be interacting with Oracle Cloud in the future state. For example: Bank, Tax Engine, Credit providers, P-card, Consolidation Engine, EDI engine, Identify Management systems, etc.). Overall, increases the base effort for Technical Architecture by roughly 3% for each unit greater than 5. For more information refer to Scaler section in the User Guide.
+•	Cloud Environments – Number of Oracle Cloud Environments to be managed during Implementation Cycle. Overall, increases the base effort for Technical Architecture by roughly 7% for each unit greater than 4. For more information refer to Scaler section in the User Guide.
+•	Integration Platforms – Number of different Integration Platforms to be considered for Integration Architecture (e.g. MuleSoft, Del Boomi, OIC, etc.). Overall, increases the base effort for Technical Architecture by roughly 11% for each unit greater than 1. For more information refer to Scaler section in the User Guide.
+•	Security & Compliance 
+•	Legal Entities – The number of Legal Entities that affect Security & Compliance workstream. Typically smaller than the total number of Legal Entities.
+►	Assets – 
+•	EY EA Data Conversion Recon Scripts – Recon scripts for Oracle Cloud rapid implementations assist business process team to validate configurations/setups rather than screen compare. Reduces Test effort by 10% in the Business Process Design & Config workstream.
+Usage Criteria:
+1. No installation required, BIP reports need to be migrated to target instance to execute and generate reconciliation report
+2. This should be preferred when RACOR is NOT used
+•	HCM cloud interface tool – Solution for Oracle HCM Cloud implementations using the source system's data and migrate the same to Oracle HCM Cloud.
+**Efforts need to be manually factored under Data Conversion Workstream or HCM module effort**
+Usage Criteria: Selecting this asset would not automatically reduce the efforts on the estimator instead manual intervention is required
+•	RACOR - A single spot solution for Oracle Cloud rapid implementations using the source system's data and migrate the same to Oracle Cloud.
+►	Workstream Parameters — these work in conjunction with the size drivers and help estimate the base effort of the individual workstreams 
+•	Common Parameters 
+•	Oracle Users – Total number of Oracle system users
+•	Change Experience Parameters
+•	% of training to be delivered via Train-the-Trainer method – Percentage of training to be delivered via Train-the-Trainer method. The intent is to deliver as much training is possible using this method with most instructors to be provided by the client - see % of EY TtT instructors parameter
+•	% of EY TtT instructors – Percentage of TtT instructors provided by EY. The intent of to have most of the instructors to be provided by client, hence the default is 0%.
+•	Avg Trainees per TtT Class – Average number of Trainers to be trained via TtT method. Must be at least 2 trainees per class - which leads to a 1-on-1 ratio for instructors to trainees
+•	% of course hours to be translated – % of training to be translated. This applies to both training courseware material and performance support material.
+•	Languages to translate – Number of target languages to translate the training
+•	Average Course Hours per User – Average amount of training course hours to be delivered to the individual users. The amount to be delivered via different methods is determined by %ILT, % VILT, %WBL listed below.
+•	Instructors per ILT/VILT class – Expected number of instructors required to lead ILT or VILT training
+•	Support per WBL class – An average amount of effort (fraction of an hour) needed to support a WBL run.
+•	Users per ILT/VILT class – Average number of users per ILT or VILT class.
+•	Users per WBL course – Average number of users that will take a single WBL course
+•	% ILT – % of expected training to be ILT
+•	% VILT – % of expected training to be VILT	
+•	% WBL – % of expected training to be WBL
